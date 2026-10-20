@@ -1021,17 +1021,33 @@ public:
 
 AsyncWebSocket ws(WS_PATH);
 
+static void sendWebSocketClientMessage(AsyncWebSocketClient *destClient, const char *msg)
+{
+	if(destClient == NULL || msg == NULL)
+		return;
+	if(destClient->status() != WS_CONNECTED)
+		return;
+	if(destClient->queueIsFull())
+		return;
+	// The library copies the payload immediately when given a String reference,
+	// so keep the message data alive only for the duration of this call.
+	destClient->text(String(msg));
+}
+
 #if GreetingInMainLoop
 AsyncWebSocketClient * _lastWSclient=NULL;
 void sayHelloWS()
 {
-	if(! _lastWSclient) return;
-	
-	greeting([=](const char* msg){
-			_lastWSclient->text(msg);
-	});
-	
+	AsyncWebSocketClient *client = _lastWSclient;
 	_lastWSclient = NULL;
+	if(client == NULL)
+		return;
+	if(client->status() != WS_CONNECTED)
+		return;
+
+	greeting([client](const char* msg){
+		sendWebSocketClientMessage(client, msg);
+	});
 }
 
 #endif
@@ -1045,12 +1061,18 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 		#if GreetingInMainLoop
 		_lastWSclient = client;
 		#else
-		greeting([=](const char* msg){
-			client->text(msg);
+		greeting([client](const char* msg){
+			sendWebSocketClientMessage(client, msg);
 		});
 		#endif
   	} else if(type == WS_EVT_DISCONNECT){
     	DBG_PRINTF("ws[%s] disconnect: %u\n", server->url(), client->id());
+		#if GreetingInMainLoop
+		// the greeting runs later from the main loop; don't let it use a freed client
+		if(_lastWSclient == client){
+			_lastWSclient = NULL;
+		}
+		#endif
   	} else if(type == WS_EVT_ERROR){
     	DBG_PRINTF("ws[%s][%u] error(%u): %s\n", server->url(), client->id(), *((uint16_t*)arg), (char*)data);
   	} else if(type == WS_EVT_PONG){
@@ -1079,7 +1101,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
 
 //      		DBG_PRINTF("ws[%u] frame [%lu - %lu]: ", client->id(), info->num, info->index, info->index + len);
 
-	        for(size_t i=0; i < info->len; i++) {
+	        for(size_t i=0; i < len; i++) {
     	    	//msg += (char) data[i];
     	    	brewPi.write(data[i]);
         	}
@@ -1100,6 +1122,9 @@ void stringAvailable(const char *str)
 {
 	//DBG_PRINTF("BroadCast:%s\n",str);
 
+	ws.cleanupClients();
+	if(!ws.availableForWriteAll())
+		return;
 	ws.textAll(str);
 
 
