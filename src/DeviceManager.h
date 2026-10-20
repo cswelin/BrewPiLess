@@ -319,6 +319,8 @@ public:
 
 	static bool isDeviceValid(DeviceConfig& config, DeviceConfig& original, uint8_t deviceIndex);
 
+	static bool isFunctionAssignedElsewhere(DeviceConfig& config, uint8_t deviceIndex);
+
 	/**
 	 * read hardware spec from stream and output matching devices
 	 */

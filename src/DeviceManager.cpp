@@ -592,6 +592,11 @@ void DeviceManager::parseDeviceDefinition()
 	}
 
 	bool valid = isDeviceValid(target, original, dev.id);
+	// only one device can hold a function. installing a second one would delete the
+	// first device's object while its slot still claims the function.
+	if (valid && isFunctionAssignedElsewhere(target, dev.id)) {
+		valid = false;
+	}
 	DeviceConfig* print = &original;
 	if (valid) {
 		print = &target;
@@ -609,6 +614,27 @@ void DeviceManager::parseDeviceDefinition()
 	deviceManager.beginDeviceOutput();
 	deviceManager.printDevice(dev.id, *print, NULL);
 	piLink.printNewLine();
+}
+
+/**
+ * Returns true when a slot other than deviceIndex already has the same
+ * chamber/beer/function as config.
+ */
+bool DeviceManager::isFunctionAssignedElsewhere(DeviceConfig& config, uint8_t deviceIndex)
+{
+	if (config.deviceFunction == DEVICE_NONE)
+		return false;
+
+	DeviceConfig other;
+	for (device_slot_t slot = 0; allDevices(other, slot); slot++) {
+		if (slot == deviceIndex)
+			continue;
+		if (other.deviceFunction == config.deviceFunction
+				&& other.chamber == config.chamber
+				&& other.beer == config.beer)
+			return true;
+	}
+	return false;
 }
 
 /**
@@ -655,9 +681,9 @@ bool DeviceManager::isDeviceValid(DeviceConfig& config, DeviceConfig& original, 
 		return false;
 	}
 
-	// todo - find device at another index with the same chamber/beer/function spec.
-	// with duplicate function defined for the same beer, that they will both try to create/delete the device in the target location.
-	// The highest id will win.
+	// duplicate chamber/beer/function across slots is rejected in parseDeviceDefinition()
+	// via isFunctionAssignedElsewhere(). it's not checked here because the EEPROM load at
+	// boot also calls this, and rejecting there would drop both existing duplicates.
 	DeviceType dt = deviceType(config.deviceFunction);
 	if (!isAssignable(dt, config.deviceHardware)) {
 		logErrorIntInt(ERROR_CANNOT_ASSIGN_TO_HARDWARE, dt, config.deviceHardware);
