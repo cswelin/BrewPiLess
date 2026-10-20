@@ -841,10 +841,12 @@ function updateTempUnit(u) {
 
 function rcvBeerProfile(p) {
     closeDlgLoading();
-    updateTempUnit(p.u); // using profile temp before we get from controller
-    BrewPiSetting.tempUnit = p.u;
+    // the controller's unit wins. the profile's saved unit is only used until the
+    // controller settings arrive; initProfile() converts the steps to the active unit.
+    if (!BrewPiSetting.valid) BrewPiSetting.tempUnit = p.u;
+    updateTempUnit(BrewPiSetting.tempUnit);
     profileEditor.initProfile(p);
-    ControlChart.init("tc_chart", profileEditor.chartdata(), p.u);
+    ControlChart.init("tc_chart", profileEditor.chartdata(), BrewPiSetting.tempUnit);
 }
 
 function ccparameter(s) {
