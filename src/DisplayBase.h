@@ -144,6 +144,7 @@ public:
 	DISPLAY_METHOD void resetBacklightTimer() { }
 
 	DISPLAY_METHOD void updateBacklight() { }
+	DISPLAY_METHOD bool isBacklightOff() { return false; }
 	DISPLAY_METHOD void setAutoOffPeriod(uint32_t){ }
 };
 

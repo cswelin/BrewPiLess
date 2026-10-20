@@ -78,6 +78,8 @@ class NullLcdDriver : public Print {
 
 	void updateBacklight(void);
 
+	bool isBacklightOff(void){ return false; }
+
 	uint8_t getCurrPos(void){
 		return _currpos;
 	}

@@ -301,6 +301,10 @@ void BrewPiLcd::updateBacklight(void){
     getLcd()->updateBacklight();
 }
 
+bool BrewPiLcd::isBacklightOff(void){
+    return getLcd()->isBacklightOff();
+}
+
 void BrewPiLcd::setAutoOffPeriod(uint32_t period){
     getLcd()->setAutoOffPeriod(period);
 }

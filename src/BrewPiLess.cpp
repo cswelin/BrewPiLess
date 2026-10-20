@@ -1820,7 +1820,14 @@ void brewpiLoop(void)
 		tempControl.updateOutputs();
 
 #if BREWPI_MENU
-		if (rotaryEncoder.pushed()) {
+		// check before pushed(), which resets the backlight timer.
+		// if the screen was dark, the input only wakes it up.
+		bool backlightWasOff = display.isBacklightOff();
+		bool pushed = rotaryEncoder.pushed();
+		if (pushed && backlightWasOff) {
+			rotaryEncoder.resetPushed();
+			display.updateBacklight();
+		}else if (pushed) {
 			#if TWOFACED_LCD
 			// might not be necessary, pickSettingToChange() will go into a loop until
 			// end of menu
@@ -1836,11 +1843,18 @@ void brewpiLoop(void)
 		}
 		#if TWOFACED_LCD
 		if(rotaryEncoder.changed()){
-			int16_t s=rotaryEncoder.read();
-			DBG_PRINTF("rotaryEncoder.read()=%d\n",s);
-			if(s==0) sharedDisplayManager.previous();
-			else sharedDisplayManager.next();
-			rotaryEncoder.setRange(1,0,2);
+			if(backlightWasOff){
+				// knob turned while dark: wake only, don't switch screens
+				rotaryEncoder.setRange(1,0,2);
+				rotaryEncoder.changed(); // sync with the reset position
+				display.updateBacklight();
+			}else{
+				int16_t s=rotaryEncoder.read();
+				DBG_PRINTF("rotaryEncoder.read()=%d\n",s);
+				if(s==0) sharedDisplayManager.previous();
+				else sharedDisplayManager.next();
+				rotaryEncoder.setRange(1,0,2);
+			}
 		}
 		#endif
 #endif

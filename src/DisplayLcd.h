@@ -117,6 +117,7 @@ class LcdDisplay DISPLAY_SUPERCLASS
 
 	DISPLAY_METHOD void resetBacklightTimer() { lcd.resetBacklightTimer(); }
 	DISPLAY_METHOD void updateBacklight() { lcd.updateBacklight(); }
+	DISPLAY_METHOD bool isBacklightOff() { return lcd.isBacklightOff(); }
 
 	DISPLAY_METHOD void setAutoOffPeriod(uint32_t period) { lcd.setAutoOffPeriod(period); }
 	

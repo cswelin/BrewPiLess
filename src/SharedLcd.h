@@ -139,6 +139,7 @@ public:
     void getLine(uint8_t lineNumber, char * buffer);
     void resetBacklightTimer(void);
     void updateBacklight(void);
+    bool isBacklightOff(void);
     void setAutoOffPeriod(uint32_t period);
     void setBufferOnly(bool bufferOnly) { _bufferOnly = bufferOnly; }
 

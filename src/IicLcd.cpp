@@ -317,10 +317,13 @@ void IIClcd::resetBacklightTimer(void) {
     _backlightTime = ticks.seconds();
 }
 
+// True when the auto-off period has elapsed since the last user input
+bool IIClcd::isBacklightOff(void) {
+    return (backlightAutoOffPeriod !=0) && (BREWPI_SIMULATE || ticks.timeSince(_backlightTime) > backlightAutoOffPeriod);
+}
+
 void IIClcd::updateBacklight(void) {
-    // True = OFF, False = ON
-    bool backLightOutput = (backlightAutoOffPeriod !=0) && (BREWPI_SIMULATE || ticks.timeSince(_backlightTime) > backlightAutoOffPeriod);
-    if(backLightOutput) {
+    if(isBacklightOff()) {
         noBacklight();
     } else {
         backlight();

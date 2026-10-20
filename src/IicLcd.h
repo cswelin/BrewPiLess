@@ -118,6 +118,8 @@ public:
 
   void updateBacklight(void);
 
+  bool isBacklightOff(void);
+
   uint8_t getCurrPos(void) {
     return _currpos;
   }
