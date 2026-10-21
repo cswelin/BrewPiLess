@@ -2185,6 +2185,7 @@ void setup(void){
 
 uint32_t _periodicReportTime;
 #define PeriodicalReportTime 5
+#define LOOP_IDLE_MS 2
 void loop(void){
 //{brewpi
 #if BREWPI_SIMULATE
@@ -2277,4 +2278,11 @@ void loop(void){
   			ESP.restart();
   		}
   	}
+
+#if ESP32
+	// give the CPU back to the scheduler briefly. control runs once a second and
+	// the encoder/web/BLE are interrupt- or task-driven, so a few ms of idle here
+	// costs nothing in responsiveness but stops this core spinning at 100%.
+	delay(LOOP_IDLE_MS);
+#endif
 }
