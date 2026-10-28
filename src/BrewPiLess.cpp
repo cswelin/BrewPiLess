@@ -1141,6 +1141,8 @@ void notifyLogStatus(void)
 
 void periodicalReport(void)
 {
+	// this report only feeds the web page; skip building it when no browser is connected
+	if(ws.count() == 0) return;
 //	char buf[512];
 
 	uint8_t mode, state;
