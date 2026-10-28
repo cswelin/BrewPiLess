@@ -2185,6 +2185,29 @@ void setup(void){
 	#endif
 }
 
+#if ESP32
+static void restartMdns(void)
+{
+	MDNS.end();
+	if(MDNS.begin(theSettings.systemConfiguration()->hostnetworkname)){
+		MDNS.addService("http", "tcp", 80);
+		DBG_PRINTF("mDNS restarted\n");
+	}else{
+		DBG_PRINTF("mDNS restart failed\n");
+	}
+}
+
+static void keepMdnsAlive(void)
+{
+	static bool wasConnected = false;
+	bool connected = (WiFi.status() == WL_CONNECTED);
+	// (re)start the responder on every reconnect; the one started in setup()
+	// doesn't survive Wi-Fi drops or STA <-> AP_STA mode switches on ESP32.
+	if(connected && !wasConnected) restartMdns();
+	wasConnected = connected;
+}
+#endif
+
 uint32_t _periodicReportTime;
 #define PeriodicalReportTime 5
 #define LOOP_IDLE_MS 2
@@ -2265,6 +2288,9 @@ void loop(void){
 
 	if(!IS_RESTARTING){
 		WiFiSetup.stayConnected();
+		#if ESP32
+		keepMdnsAlive();
+		#endif
 	}
 
   	if(_systemState ==SystemStateRestartPending){
